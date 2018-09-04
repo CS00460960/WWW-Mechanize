@@ -1,0 +1,24 @@
+use strict;
+use warnings;
+use Net::OpenSSH;
+use WWW::Mechanize;
+ 
+                 
+my $url = "http://p1gio1z9.vci.att.com:40000/console/login/LoginForm.jsp";
+                my $username = "########";
+               my $password = "#########";
+                my $mech = WWW::Mechanize->new();
+                $mech->cookie_jar(HTTP::Cookies->new());
+                
+                $mech->get($url);
+                print$mech->title()."\n";
+                $mech->submit_form(
+                    with_fields => {
+                    "j_username" =>$username,
+                    "j_password" => $password,}
+
+ $mech->get("http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&_pageLabel=ServerControlTabcontrolTabPage&handle=com.bea.console.handles.JMXHandle%28%22com.bea%3AName%3D".$srv."%2CType%3DServer%22%29");
+   my $name='serverControlStartstopForm';
+                    $mech->form_id( $name );
+                    $mech->click({ name => "Shutdown" });
+

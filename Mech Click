@@ -1,0 +1,408 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Net::OpenSSH;
+use WWW::Mechanize;
+#use WWW::Scripter;
+use URI;
+
+
+try
+{
+        sub Usage
+        {
+                print "
+#***INFOSTART *
+##
+##Usage :
+##1) Without Substitute : perl ATT_TB_CPE-ORDER_GIOM_THREAD_COUNT.pl
+##Example :
+##1) Without Substitute : perl ATT_TB_CPE-ORDER_GIOM_THREAD_COUNT.pl
+##Dependencies:
+##1)ATT_MODULE.pm : Required for Log File creation and Ret code Creation.
+##Log File Path : <Script Path>/LOG/<Curr_date>/ATT_TB_CPE-ORDER_GIOM_THREAD_COUNT.log
+##*****INFOEND ***\n";
+                       exit;
+           }
+
+
+   BEGIN
+        {
+                use Cwd qw(abs_path);
+                use File::Basename;
+        }
+        use ATT_MODULE qw(open_logf logw trim exit_script read_input_vars write_output_vars check_mandatory_vars %INPUTVARS %OUTPUTVARS);
+        my $LOG_STATUS=open_logf();
+        if ($LOG_STATUS != 0 )
+        {
+                print "RETCODE==1\n";
+                print "RETDESC==Error while opening Log file.\n";
+                logw("RETDESC==Error while opening Log file.\n",2);
+                exit;
+        }
+        logw("Wrapper Script Execution Started Successfully",1);
+
+################ Declaring Global Variable ################
+#        our $flag1=0;
+#        our $flag2=0;
+#            our $row;
+
+      my @array1=();
+      my @array2=();
+      my @array3=();
+############### subroutines for Push into Array ##################################
+       sub PushValue
+               {
+                  push @array1, $_[0];
+                }
+################################################
+                   sub ServerName
+                     {
+                     print "Server Name: $_[0]\n";
+                      }
+
+
+       ################ Defining Function #################
+
+        sub mechSession {
+                 use Test::Fatal qw( exception );
+                 use Test::More;
+                 my $mech = WWW::Mechanize->new(visible => 0);
+              # my $mech= WWW::Scripter->new(autocheck => 1);
+               #         $mech->use_plugin('JavaScript');
+
+                $mech->cookie_jar(HTTP::Cookies->new());
+                return $mech;
+
+}
+         sub CountCheck
+         {
+
+       ###### Variable Declaration ###############
+                 my $url = "http://p1gio1z9.vci.att.com:40000/console/login/LoginForm.jsp";
+                our $username = "weblogic";
+               our $password = "weblogic#";
+          #      my $mech = WWW::Mechanize->new();
+          #      $mech->cookie_jar(HTTP::Cookies->new());
+                 my $mech=mechSession();
+                $mech->get($url);
+                print$mech->title()."\n";
+                $mech->submit_form(
+                    with_fields => {
+                    "j_username" =>$username,
+                    "j_password" => $password,}
+                    );
+                 my $output_page1 = $mech->content();
+                my $auth_keyword1="Authentication Denied";
+
+                my $validation1=grep(/$auth_keyword1/,$output_page1);
+                if ($validation1 eq 1)
+                {
+                        print "RETCODE==1\n";
+                        print "RETDESC==Unable to login in URL $url. Please check username and password details.\n";
+                        logw("RETDESC==Unable to login in URL $url. Please check username and password details.\n",2);
+                        exit;
+                }
+                else
+                {
+                        print "\nSuccessfully Logged in URL $url.\n";
+                        logw("\nSuccessfully Logged in URL $url.\n",1);
+                }
+
+
+         ########################Server Page ###################################################
+                $mech->follow_link( url =>'http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&_pageLabel=CoreServerServerTablePage');
+                print $mech->title()."\n";
+                my $output_page2 = $mech->content();
+                my $auth_keyword2="Summary of Servers";
+                my $validation2=grep(/$auth_keyword2/,$output_page2);
+                if ($validation2 eq 1)
+                {
+                        print "\nServer Page found.\n";
+                        logw("\n Server page found.\n",1);
+                }
+                else
+                {
+                        print "RETCODE==1\n";
+                        print "RETDESC== Server Page not found.\n";
+                        logw("RETDESC== Server Page not found.\n",2);
+                        exit;
+                }
+
+         ########################Summary of Servers###########################
+                my $server1="giom-AdminServer";
+                my $server2="giom-ManagedServer-01";
+                my $server3="giom-ManagedServer-02";
+                my $server4="giom-ManagedServer-03";
+                my @server=($server1,$server2,$server3,$server4);
+
+                 foreach my $x (@server)
+                {
+
+##############################################CLICK ON SERVER##################################################
+                  $mech->follow_link(url=>"http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&DispatcherPortletperspective=configuration-page&_pageLabel=DispatcherPage&DispatcherPortlethandle=com.bea.console.handles.JMXHandle%28%22com.bea%3AName%3D".$x."%2CType%3DServer%22%29");
+                        print $mech->title()."\n";
+                        my $output_page3 = $mech->content();
+                        my $auth_keyword3="Settings for $x";
+                        my $validation3=grep(/$auth_keyword3/,$output_page3);
+                        if ($validation3 eq 1)
+                        {
+                                print "Successfully clicked on Server $x.\n";
+                                logw("Successfully clicked on Server $x.\n",1);
+                        }
+                        else
+                        {
+                                print "RETCODE==1\n";
+                                print "RETDESC==Unable to click on Server $x.\n";
+                                logw("RETDESC==Unable to click on Server $x.\n",2);
+                                exit;
+                        }
+#############################CLICK ON MONITORING####################################################
+                       $mech->follow_link(text =>"Monitoring");
+                        print $mech->title()."\n";
+                        my $output_page4 = $mech->content();
+                        my $auth_keyword4="Settings for $x ";
+                        my $validation4=grep(/$auth_keyword4/,$output_page4);
+                        if ($validation4 eq 1)
+                        {
+                               print "Successfully clicked on Monitoring tab of server $x.\n";
+                               logw("Successfully clicked on Monitoring tab of server $x.\n",1);
+                        }
+                        else
+                        {
+                                print "RETCODE==1\n";
+                                print "RETDESC==Unable to click on Monitoring tab of Server $x.\n";
+                                logw("RETDESC==Unable to click on  Monitoring tab of Server $x.\n",2);
+                                exit;
+                        }
+######################################Click on Thread #################################################
+
+                          my $output_page5 = $mech->content();
+                        my $auth_keyword5= "This page provides information on the thread activity for the current server.";
+                        my $validation5=grep(/$auth_keyword5/,$output_page5);
+                        if ($validation5 eq 1)
+                         {
+                           print "Successfully clicked on Threads tab of server $x.\n";
+                           logw("Successfully clicked on Threads tab of server $x.\n",1);
+                         }
+
+                        else
+                         {
+
+                          $mech->follow_link(text =>"Threads");
+                          print $mech->title()."\n";
+                         }
+                        my $output_page5 = $mech->content();
+                        my $auth_keyword5="Self-Tuning Thread Pool";
+                        my $validation5=grep(/$auth_keyword5/,$output_page5);
+                        if ($validation5 eq 1)
+                          {
+                               print "Successfully clicked on Threads tab of server $x.\n";
+                                logw("Successfully clicked on Threads tab of server $x.\n",1);
+                          }
+                        else
+                        {
+                                print "RETCODE==1\n";
+                                print "RETDESC==Unable to click on Threads tab of Server $x.\n";
+                                logw("RETDESC==Unable to click on  Threads tab of Server $x.\n",2);
+                                exit;
+                        }
+
+
+
+############################################# READ HOGGING COUNT####################################################
+
+                        my @arr1=split(/hoggingThreadCount1/,$output_page5);
+                        my $var1=$arr1[1];
+
+                        my @arr2=split(/>/,$var1);
+                        my $var2=$arr2[1];
+
+                       my @arr3=split(/</,$var2);
+                        my $var3=$arr3[0];
+
+####################### IF COUNT GREATER THAN 15 THEN PUSH VALUE INTO ARRAY1################################################
+                                if ($var3 > 15)
+                                  {
+                                    print "\nHogging Thread Count : $var3\n";
+                #                    PushValue($x);
+                 #                   print "Value in  Array1: @array1 \n";
+                  #                  ServerName($x);
+                                  }
+
+                                else
+                                  {
+                                    print "\nHogging Thread Count1 : $var3\n";
+                                   PushValue($x);
+                                   print "Value in  Array1: @array1 \n";
+                                   ServerName($x);
+
+                                  }
+################################   GET BACK TO SUMMARY OF SERVER PAGE     ###################################
+                $mech->get("http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&_pageLabel=CoreServerServerTablePage");
+                print $mech->title()."\n";
+                my $output_page6 = $mech->content();
+                my $auth_keyword6="Summary of Servers";
+                my $validation6=grep(/$auth_keyword6/,$output_page6);
+                if ($validation6 eq 1)
+                {
+                        print "\nServer Page found.\n";
+                        logw("\n Server page found.\n",1);
+                }
+                else
+                {
+                        print "RETCODE==1\n";
+                        print "RETDESC== Server Page not found.\n";
+                        logw("RETDESC== Server Page not found.\n",2);
+                        exit;
+                }
+
+              }# END OF FOREACH LOOP
+
+      }  # end of CountCheck Subroutine
+
+           CountCheck();
+           if(!@array1==0)  ################ if server count is not zero in  array1 ####################
+            {
+                    @array2=@array1;
+               #     print " value in Array2 : @array2 \n";
+                    print "\nHogging Thread  count is above threshold value. Waiting for 5 mins.\n";
+                    logw("\nHogging Thread count is above threshold value. Waiting for 5 mins.\n",1);
+               #     sleep 300;
+                    print "\nAgain Checking the Hogging Thread count\n";
+                     logw("\nAgain Checking the Hogging Thread count\n",1);
+                    CountCheck();
+                if (!@array2==0)
+                {
+                        @array3=@array2;
+                        print " value in Array3 : @array3 \n";
+                        print "RETCODE==2\n";
+                        print "\nNeed to Bounce the server as count is above threshold value\n";
+                        logw("\nNeed to Bounce the server as count is above threshold value\n",1);
+#                       foreach my $srv(@array3) {
+#                               print "serverr -- $srv\n";
+                                 performBounce();
+#                       }
+#                        performBounce();
+                        exit;
+                }
+                else
+                {
+
+                        print "RETCODE==0\n";
+                        print "RETDESC==Hogging count is under Threshold value after monitoring. No need to bounce the server\n";
+                        logw("RETDESC==Hogging count is under Threshold value after monitoring. No need to bounce the server\n",1);
+                        exit;
+                }
+
+             }
+            else
+             {
+                  print "RETCODE==0\n";
+                  print "RETDESC==Hogging Thread count is under Threshold value. No need to monitor and bounce the server\n";
+                  logw("RETDESC==Hogging Thread  count is under Threshold value. No need to monitor and bounce the server\n",1);
+                  exit;
+             }
+###################################################   Subroutinr for Bounce #####################################3
+        sub performBounce{
+
+#                foreach my $srv(@array3) {
+                  #              print "serverr -- $srv\n";
+                        #         performBounce($srv);
+                #               if ($srv eq "giom-AdminServer"){
+                #                       my $chkval="1";
+                #               }
+                #my $srv=shift || die "no server passed";
+
+        ########### Again login to the server ################################
+               my $url = "http://p1gio1z9.vci.att.com:40000/console/login/LoginForm.jsp";
+                our $username = "weblogic";
+               our $password = "weblogic#";
+                my $mech=mechSession();
+                $mech->get($url);
+                print$mech->title()."\n";
+                $mech->submit_form(
+                    with_fields => {
+                    "j_username" =>$username,
+                    "j_password" => $password,}
+                    );
+
+           ##################### Summary of Servers #####################################
+
+                $mech->get("http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&_pageLabel=CoreServerServerTablePage");
+                print $mech->title()."\n";
+                my $output_page7 = $mech->content();
+                my $auth_keyword7="Summary of Servers";
+                my $validation7=grep(/$auth_keyword7/,$output_page7);
+                if ($validation7 eq 1)
+                {
+                        print "\nServer Page found.\n";
+                        logw("\n Server page found.\n",1);
+                }
+                else
+                {
+                        print "RETCODE==1\n";
+                        print "RETDESC== Server Page not found.\n";
+                        logw("RETDESC== Server Page not found.\n",2);
+                        exit;
+                }
+
+                foreach my $srv(@array3) {
+                        print "server si --- $srv\n";
+                        if ($srv eq "giom-AdminServer" or "giom-ManagedServer-01" or "giom-ManagedServer-02" or "giom-ManagedServer-03" )
+                        {
+                         $mech->get("http://p1gio1z9.vci.att.com:40000/console/console.portal?_nfpb=true&_pageLabel=ServerControlTabcontrolTabPage&handle=com.bea.console.handles.JMXHandle%28%22com.bea%3AName%3D".$srv."%2CType%3DServer%22%29");
+                          my $output_page8 = $mech->content();
+                          my $auth_keyword8="Use this page to change the state of the current server";
+                          my $validation8=grep(/$auth_keyword8/,$output_page8);
+
+                                     if ($validation8 eq 1)
+                             {
+                                  print "\nControl Start/stop Page for $srv found.\n";
+                                  logw("\n Control Start/stop page for $srv found.\n",1);
+                              }
+                         else
+                             {
+                               print "RETCODE==1\n";
+                               print "RETDESC== Control Start/stop page for $srv  not found.\n";
+                               logw("RETDESC== Control Start/stop  Page for $srv  not found.\n",2);
+                               exit;
+
+                             }
+
+                           my $window = shift;
+
+    print "* Moving the mouse over the window id: $window\n";
+
+    my ( $left, $top, $right, $bottom ) = GetWindowRect($window);
+
+    MouseMoveAbsPix( ( $right + $left ) / 2, ( $top + $bottom ) / 2 );
+
+    sleep(1);
+
+    print "* Left Clicking on the window id: $window\n";
+    SendMouse("{LeftClick}");
+    sleep(1);
+    print $mech->title()."\n";
+
+
+                        } #END OF IF BLOCK
+
+                       else
+                          {
+                             print "RETCODE==1\n";
+                               print "RETDESC== No server found.\n";
+                               logw("RETDESC== No server found.\n",2);
+                               exit;
+                           }#END OF ELSE BLOCK
+
+                }    #END OF FOERACH
+    } #END of Performbounce subroutine
+} #END of try block
+catch
+{
+        logw("Error caught in catch:$_\n",1);
+        print "RETCODE==1\n";
+        print "RETDESC==Error caught in catch:$_\n";
+        exit;
+}
